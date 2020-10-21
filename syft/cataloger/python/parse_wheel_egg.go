@@ -64,16 +64,30 @@ func parseWheelOrEggMetadata(_ string, reader io.Reader) ([]pkg.Package, error) 
 		return nil, fmt.Errorf("failed to parse python wheel/egg: %w", err)
 	}
 
+	var metadata pkg.EggWheelMetadata
+
 	p := pkg.Package{
-		Name:     fields["Name"],
-		Version:  fields["Version"],
-		Language: pkg.Python,
-		Type:     pkg.PythonPkg,
+		Name:         fields["Name"],
+		Version:      fields["Version"],
+		Language:     pkg.Python,
+		Type:         pkg.PythonPkg,
+		MetadataType: pkg.PythonEggWheelMetadataType,
+		Metadata:     pkg.EggWheelMetadata{},
 	}
 
 	if license, ok := fields["License"]; ok && license != "" {
 		p.Licenses = []string{license}
 	}
+
+	if author, ok := fields["Author"]; ok && author != "" {
+		metadata.Author = author
+	}
+
+	if email, ok := fields["Author-email"]; ok && email != "" {
+		metadata.AuthorEmail = email
+	}
+
+	p.Metadata = metadata
 
 	return []pkg.Package{p}, nil
 }

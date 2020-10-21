@@ -4,10 +4,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/go-test/deep"
+
 	"github.com/anchore/syft/syft/pkg"
 )
 
-func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg.Package) {
+func assertPackagesEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg.Package) {
 	t.Helper()
 	if len(actual) != len(expected) {
 		for _, a := range actual {
@@ -22,72 +24,68 @@ func assertPkgsEqual(t *testing.T, actual []pkg.Package, expected map[string]pkg
 			t.Errorf("unexpected package found: '%s'", a.Name)
 		}
 
-		if expectedPkg.Version != a.Version {
-			t.Errorf("unexpected package version: '%s'", a.Version)
-		}
-
-		if a.Language != expectedPkg.Language {
-			t.Errorf("bad language: '%+v'", a.Language)
-		}
-
-		if a.Type != expectedPkg.Type {
-			t.Errorf("bad package type: %+v", a.Type)
-		}
-
-		if len(a.Licenses) < len(expectedPkg.Licenses) {
-			t.Errorf("bad package licenses count: '%+v'", a.Licenses)
-		}
-		if len(a.Licenses) > 0 {
-			if a.Licenses[0] != expectedPkg.Licenses[0] {
-				t.Errorf("bad package licenses: '%+v'", a.Licenses)
-			}
+		for _, d := range deep.Equal(a, expectedPkg) {
+			t.Errorf("diff: %+v", d)
 		}
 
 	}
 }
 
 func TestParseEggMetadata(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"requests": {
-			Name:     "requests",
-			Version:  "2.22.0",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: []string{"Apache 2.0"},
+	tests := []struct {
+		Fixture      string
+		ExpectedPkgs map[string]pkg.Package
+	}{
+		{
+			Fixture: "test-fixtures/egg-info/PKG-INFO",
+			ExpectedPkgs: map[string]pkg.Package{
+				"requests": {
+					Name:         "requests",
+					Version:      "2.22.0",
+					Language:     pkg.Python,
+					Type:         pkg.PythonPkg,
+					Licenses:     []string{"Apache 2.0"},
+					MetadataType: pkg.PythonEggWheelMetadataType,
+					Metadata: pkg.EggWheelMetadata{
+						Author:      "Kenneth Reitz",
+						AuthorEmail: "me@kennethreitz.org",
+					},
+				},
+			},
+		},
+		{
+			Fixture: "test-fixtures/dist-info/METADATA",
+			ExpectedPkgs: map[string]pkg.Package{
+				"Pygments": {
+					Name:         "Pygments",
+					Version:      "2.6.1",
+					Language:     pkg.Python,
+					Type:         pkg.PythonPkg,
+					Licenses:     []string{"BSD License"},
+					MetadataType: pkg.PythonEggWheelMetadataType,
+					Metadata: pkg.EggWheelMetadata{
+						Author:      "Georg Brandl",
+						AuthorEmail: "georg@python.org",
+					},
+				},
+			},
 		},
 	}
-	fixture, err := os.Open("test-fixtures/egg-info/PKG-INFO")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
+
+	for _, test := range tests {
+		t.Run(test.Fixture, func(t *testing.T) {
+			fixture, err := os.Open(test.Fixture)
+			if err != nil {
+				t.Fatalf("failed to open fixture: %+v", err)
+			}
+
+			actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
+			if err != nil {
+				t.Fatalf("failed to parse egg-info: %+v", err)
+			}
+
+			assertPackagesEqual(t, actual, test.ExpectedPkgs)
+		})
 	}
 
-	actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse egg-info: %+v", err)
-	}
-
-	assertPkgsEqual(t, actual, expected)
-}
-
-func TestParseWheelMetadata(t *testing.T) {
-	expected := map[string]pkg.Package{
-		"Pygments": {
-			Name:     "Pygments",
-			Version:  "2.6.1",
-			Language: pkg.Python,
-			Type:     pkg.PythonPkg,
-			Licenses: []string{"BSD License"},
-		},
-	}
-	fixture, err := os.Open("test-fixtures/dist-info/METADATA")
-	if err != nil {
-		t.Fatalf("failed to open fixture: %+v", err)
-	}
-
-	actual, err := parseWheelOrEggMetadata(fixture.Name(), fixture)
-	if err != nil {
-		t.Fatalf("failed to parse dist-info: %+v", err)
-	}
-
-	assertPkgsEqual(t, actual, expected)
 }
