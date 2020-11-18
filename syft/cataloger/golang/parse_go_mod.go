@@ -28,6 +28,7 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, error) {
 		packages[m.Mod.Path] = pkg.Package{
 			Name:     m.Mod.Path,
 			Version:  m.Mod.Version,
+			CPEs:     pkg.GenerateCPEs(m.Mod.Path, m.Mod.Version, nil),
 			Language: pkg.Go,
 			Type:     pkg.GoModulePkg,
 		}
@@ -38,6 +39,7 @@ func parseGoMod(path string, reader io.Reader) ([]pkg.Package, error) {
 		packages[m.New.Path] = pkg.Package{
 			Name:     m.New.Path,
 			Version:  m.New.Version,
+			CPEs:     pkg.GenerateCPEs(m.New.Path, m.New.Version, nil),
 			Language: pkg.Go,
 			Type:     pkg.GoModulePkg,
 		}

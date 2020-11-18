@@ -62,9 +62,12 @@ func parseYarnLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 
 			// append the version as a string so that we can check on it later
 			fields[currentName] = versions + " " + version
+
+			cleanVersion := strings.Trim(version, "\"")
 			packages = append(packages, pkg.Package{
 				Name:     currentName,
-				Version:  strings.Trim(version, "\""),
+				Version:  cleanVersion,
+				CPEs:     pkg.GenerateCPEs(currentName, cleanVersion, &pkg.CPEFieldCandidates{TargetSW: cpeTargetSw}),
 				Language: pkg.JavaScript,
 				Type:     pkg.NpmPkg,
 			})

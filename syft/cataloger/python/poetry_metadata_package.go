@@ -15,6 +15,7 @@ func (p PoetryMetadataPackage) Pkg() pkg.Package {
 	return pkg.Package{
 		Name:     p.Name,
 		Version:  p.Version,
+		CPEs:     pkg.GenerateCPEs(p.Name, p.Version, cpeFieldCandidates(p.Name)),
 		Language: pkg.Python,
 		Type:     pkg.PythonPkg,
 	}

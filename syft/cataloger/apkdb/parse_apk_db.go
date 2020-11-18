@@ -52,6 +52,7 @@ func parseApkDB(_ string, reader io.Reader) ([]pkg.Package, error) {
 				Name:         metadata.Package,
 				Version:      metadata.Version,
 				Licenses:     strings.Split(metadata.License, " "),
+				CPEs:         pkg.GenerateCPEs(metadata.Package, metadata.Version, nil),
 				Type:         pkg.ApkPkg,
 				MetadataType: pkg.ApkMetadataType,
 				Metadata:     *metadata,

@@ -24,7 +24,7 @@ type DpkgFileRecord struct {
 }
 
 // PackageURL returns the PURL for the specific Debian package (see https://github.com/package-url/purl-spec)
-func (m DpkgMetadata) PackageURL(d distro.Distro) string {
+func (m DpkgMetadata) PackageURL(d *distro.Distro) string {
 	pURL := packageurl.NewPackageURL(
 		// TODO: replace with `packageurl.TypeDebian` upon merge of https://github.com/package-url/packageurl-go/pull/21
 		"deb",

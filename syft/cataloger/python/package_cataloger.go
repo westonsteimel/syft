@@ -71,6 +71,7 @@ func (c *PackageCataloger) catalogEggOrWheel(resolver source.Resolver, metadataL
 	return &pkg.Package{
 		Name:         metadata.Name,
 		Version:      metadata.Version,
+		CPEs:         pkg.GenerateCPEs(metadata.Name, metadata.Version, cpeFieldCandidates(metadata.Name)),
 		FoundBy:      c.Name(),
 		Locations:    sources,
 		Licenses:     licenses,

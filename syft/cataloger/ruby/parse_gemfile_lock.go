@@ -40,9 +40,14 @@ func parseGemFileLockEntries(_ string, reader io.Reader) ([]pkg.Package, error) 
 			if len(candidate) != 2 {
 				continue
 			}
+
+			name := candidate[0]
+			version := strings.Trim(candidate[1], "()")
+
 			pkgs = append(pkgs, pkg.Package{
-				Name:     candidate[0],
-				Version:  strings.Trim(candidate[1], "()"),
+				Name:     name,
+				Version:  version,
+				CPEs:     pkg.GenerateCPEs(name, version, &pkg.CPEFieldCandidates{TargetSW: cpeTargetSw}),
 				Language: pkg.Ruby,
 				Type:     pkg.GemPkg,
 			})

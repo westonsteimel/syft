@@ -114,7 +114,6 @@ func (j *archiveParser) parse() ([]pkg.Package, error) {
 	// lastly, add the parent package to the list (assuming the parent exists)
 	if parentPkg != nil {
 		// only the parent package gets the type, nested packages may be of a different package type (or not of a package type at all, since they may not be bundled)
-		parentPkg.Type = j.fileInfo.pkgType()
 		pkgs = append([]pkg.Package{*parentPkg}, pkgs...)
 	}
 
@@ -145,11 +144,16 @@ func (j *archiveParser) discoverMainPackage() (*pkg.Package, error) {
 		return nil, fmt.Errorf("failed to parse java manifest (%s): %w", j.virtualPath, err)
 	}
 
+	name := selectName(manifest, j.fileInfo)
+	version := selectVersion(manifest, j.fileInfo)
+	pkgType := j.fileInfo.pkgType()
+
 	return &pkg.Package{
-		Name:         selectName(manifest, j.fileInfo),
-		Version:      selectVersion(manifest, j.fileInfo),
+		Name:         name,
+		Version:      version,
+		CPEs:         pkg.GenerateCPEs(name, version, &pkg.CPEFieldCandidates{TargetSW: generateCandidateCPETargetSws(pkgType)}),
 		Language:     pkg.Java,
-		Type:         pkg.JavaPkg,
+		Type:         pkgType,
 		MetadataType: pkg.JavaMetadataType,
 		Metadata: pkg.JavaMetadata{
 			VirtualPath: j.virtualPath,
@@ -287,4 +291,14 @@ func (j *archiveParser) discoverPkgsFromNestedArchives(parentPkg *pkg.Package) (
 	}
 
 	return pkgs, nil
+}
+
+func generateCandidateCPETargetSws(pkgType pkg.Type) []string {
+	defaultTargetSws := []string{"java", "maven"}
+	switch pkgType {
+	case pkg.JenkinsPluginPkg:
+		return append(defaultTargetSws, "jenkins", "cloudbees_jenkins")
+	default:
+		return defaultTargetSws
+	}
 }

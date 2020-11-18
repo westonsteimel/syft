@@ -7,6 +7,9 @@ import (
 	"github.com/anchore/syft/syft/cataloger/common"
 )
 
+// TODO: rails is not entirely accurate, but we can check the full contents of the gemfile or gemspec to see if rails is a dependency, then add it as a TWS
+var cpeTargetSw = []string{"ruby", "rails"}
+
 // NewGemFileLockCataloger returns a new Bundler cataloger object tailored for parsing index-oriented files (e.g. Gemfile.lock).
 func NewGemFileLockCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{

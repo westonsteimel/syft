@@ -33,7 +33,7 @@ type RpmdbFileRecord struct {
 type RpmdbFileMode uint16
 
 // PackageURL returns the PURL for the specific RHEL package (see https://github.com/package-url/purl-spec)
-func (m RpmdbMetadata) PackageURL(d distro.Distro) string {
+func (m RpmdbMetadata) PackageURL(d *distro.Distro) string {
 	pURL := packageurl.NewPackageURL(
 		packageurl.TypeRPM,
 		d.Type.String(),

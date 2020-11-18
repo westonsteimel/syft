@@ -50,9 +50,11 @@ func parseRpmDB(resolver source.FileResolver, dbLocation source.Location, reader
 			return nil, err
 		}
 
+		version := fmt.Sprintf("%s-%s", entry.Version, entry.Release) // this is what engine does, instead of fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch)
 		p := pkg.Package{
 			Name:         entry.Name,
-			Version:      fmt.Sprintf("%s-%s", entry.Version, entry.Release), // this is what engine does, instead of fmt.Sprintf("%d:%s-%s.%s", entry.Epoch, entry.Version, entry.Release, entry.Arch)
+			Version:      version,
+			CPEs:         pkg.GenerateCPEs(entry.Name, version, nil),
 			Locations:    []source.Location{dbLocation},
 			FoundBy:      catalogerName,
 			Type:         pkg.RpmPkg,

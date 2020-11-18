@@ -43,6 +43,7 @@ func parsePackageLock(_ string, reader io.Reader) ([]pkg.Package, error) {
 			packages = append(packages, pkg.Package{
 				Name:     name,
 				Version:  pkgMeta.Version,
+				CPEs:     pkg.GenerateCPEs(name, pkgMeta.Version, &pkg.CPEFieldCandidates{TargetSW: cpeTargetSw}),
 				Language: pkg.JavaScript,
 				Type:     pkg.NpmPkg,
 			})

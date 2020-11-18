@@ -181,6 +181,7 @@ func parsePackageJSON(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Name:         p.Name,
 			Version:      p.Version,
 			Licenses:     licenses,
+			CPEs:         pkg.GenerateCPEs(p.Name, p.Version, &pkg.CPEFieldCandidates{TargetSW: cpeTargetSw}),
 			Language:     pkg.JavaScript,
 			Type:         pkg.NpmPkg,
 			MetadataType: pkg.NpmPackageJSONMetadataType,

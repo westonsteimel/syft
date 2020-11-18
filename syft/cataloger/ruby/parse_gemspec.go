@@ -101,6 +101,7 @@ func parseGemSpecEntries(_ string, reader io.Reader) ([]pkg.Package, error) {
 			Name:         metadata.Name,
 			Version:      metadata.Version,
 			Licenses:     metadata.Licenses,
+			CPEs:         pkg.GenerateCPEs(p),
 			Language:     pkg.Ruby,
 			Type:         pkg.GemPkg,
 			MetadataType: pkg.GemMetadataType,

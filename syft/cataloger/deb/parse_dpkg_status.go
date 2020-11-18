@@ -34,6 +34,7 @@ func parseDpkgStatus(reader io.Reader) ([]pkg.Package, error) {
 			packages = append(packages, pkg.Package{
 				Name:         entry.Package,
 				Version:      entry.Version,
+				CPEs:         pkg.GenerateCPEs(entry.Package, entry.Version, nil),
 				Type:         pkg.DebPkg,
 				MetadataType: pkg.DpkgMetadataType,
 				Metadata:     entry,

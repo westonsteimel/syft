@@ -51,7 +51,7 @@ func TestJsonDirsPresenter(t *testing.T) {
 			Version: "2.0.1",
 		},
 	})
-	d := distro.NewUnknownDistro()
+	var d *distro.Distro
 	s, err := source.NewFromDirectory("/some/path")
 	if err != nil {
 		t.Fatal(err)
@@ -124,7 +124,7 @@ func TestJsonImgsPresenter(t *testing.T) {
 	})
 
 	s, err := source.NewFromImage(img, source.AllLayersScope, "user-image-input")
-	d := distro.NewUnknownDistro()
+	var d *distro.Distro
 	pres := NewPresenter(catalog, s.Metadata, d)
 
 	// run presenter

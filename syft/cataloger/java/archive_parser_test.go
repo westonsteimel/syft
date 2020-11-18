@@ -88,7 +88,7 @@ func TestParseJar(t *testing.T) {
 			fixture: "test-fixtures/java-builds/packages/example-jenkins-plugin.hpi",
 			ignoreExtras: []string{
 				"Plugin-Version", // has dynamic date
-				"Build-Jdk",      // can't guarantee the JDK used at build time
+				"build-Jdk",      // can't guarantee the JDK used at build time
 			},
 			expected: map[string]pkg.Package{
 				"example-jenkins-plugin": {
@@ -158,7 +158,7 @@ func TestParseJar(t *testing.T) {
 		{
 			fixture: "test-fixtures/java-builds/packages/example-java-app-maven-0.1.0.jar",
 			ignoreExtras: []string{
-				"Build-Jdk", // can't guarantee the JDK used at build time
+				"build-Jdk", // can't guarantee the JDK used at build time
 			},
 			expected: map[string]pkg.Package{
 				"example-java-app-maven": {

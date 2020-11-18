@@ -46,6 +46,7 @@ func parseRequirementsTxt(_ string, reader io.Reader) ([]pkg.Package, error) {
 			packages = append(packages, pkg.Package{
 				Name:     name,
 				Version:  version,
+				CPEs:     pkg.GenerateCPEs(name, version, cpeFieldCandidates(name)),
 				Language: pkg.Python,
 				Type:     pkg.PythonPkg,
 			})

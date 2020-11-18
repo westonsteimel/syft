@@ -35,11 +35,14 @@ func parseSetup(_ string, reader io.Reader) ([]pkg.Package, error) {
 			}
 			name := strings.Trim(parts[0], "'\"")
 			name = strings.TrimSpace(name)
+			name = strings.Trim(name, "'\"")
 
 			version := strings.TrimSpace(parts[len(parts)-1])
+			version = strings.Trim(version, "'\"")
 			packages = append(packages, pkg.Package{
-				Name:     strings.Trim(name, "'\""),
-				Version:  strings.Trim(version, "'\""),
+				Name:     name,
+				Version:  version,
+				CPEs:     pkg.GenerateCPEs(name, version, cpeFieldCandidates(name)),
 				Language: pkg.Python,
 				Type:     pkg.PythonPkg,
 			})

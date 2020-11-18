@@ -14,64 +14,58 @@ import (
 	"github.com/spf13/viper"
 )
 
-type CliOnlyOptions struct {
-	ConfigPath string
-	Verbosity  int
-}
-
+// Application is the main syft application configuration.
 type Application struct {
-	ConfigPath        string
-	PresenterOpt      presenter.Option
-	Output            string `mapstructure:"output"`
-	ScopeOpt          source.Scope
-	Scope             string  `mapstructure:"scope"`
-	Quiet             bool    `mapstructure:"quiet"`
-	Log               Logging `mapstructure:"log"`
-	CliOptions        CliOnlyOptions
-	CheckForAppUpdate bool `mapstructure:"check-for-app-update"`
+	ConfigPath        string           // the location where the application config was read from (either from -c or discovered while loading)
+	PresenterOpt      presenter.Option // -o, the native Presenter.Option to use for report formatting
+	Output            string           `mapstructure:"output"` // -o, the Presenter hint string to use for report formatting
+	ScopeOpt          source.Scope     // -s, the native source.Scope option to use for how to catalog the container image
+	Scope             string           `mapstructure:"scope"` // -s, the source.Scope string hint for how to catalog the container image
+	Quiet             bool             `mapstructure:"quiet"` // -q, indicates to not show any status output to stderr (ETUI or logging UI)
+	Log               logging          `mapstructure:"log"`   // all logging-related options
+	CliOptions        CliOnlyOptions   // all options only available through the CLI (not via env vars or config)
+	CheckForAppUpdate bool             `mapstructure:"check-for-app-update"` // whether to check for an application update on start up or not
 }
 
-type Logging struct {
-	Structured   bool `mapstructure:"structured"`
-	LevelOpt     logrus.Level
-	Level        string `mapstructure:"level"`
-	FileLocation string `mapstructure:"file"`
+// logging contains all logging-related configuration options available to the user via the application config.
+type logging struct {
+	Structured   bool         `mapstructure:"structured"` // show all log entries as JSON formatted strings
+	LevelOpt     logrus.Level // the native log level object used by the logger
+	Level        string       `mapstructure:"level"`  // the log level string hint
+	FileLocation string       `mapstructure:"file"`   // the file path to write logs to
+	Colors       bool         `mapstructure:"colors"` // the file path to write logs to
 }
 
-func setNonCliDefaultValues(v *viper.Viper) {
-	v.SetDefault("log.level", "")
-	v.SetDefault("log.file", "")
-	v.SetDefault("log.structured", false)
-	v.SetDefault("check-for-app-update", true)
+// CliOnlyOptions are options that are in the application config in memory, but are only exposed via CLI switches (not from unmarshaling a config file)
+type CliOnlyOptions struct {
+	ConfigPath string // -c. where the read config is on disk
+	Verbosity  int    // -v or -vv , controlling which UI (ETUI vs logging) and what the log level should be
 }
 
-func LoadConfigFromFile(v *viper.Viper, cliOpts *CliOnlyOptions) (*Application, error) {
+// LoadApplicationConfig populates the given viper object with application configuration discovered on disk
+func LoadApplicationConfig(v *viper.Viper, cliOpts CliOnlyOptions) (*Application, error) {
 	// the user may not have a config, and this is OK, we can use the default config + default cobra cli values instead
 	setNonCliDefaultValues(v)
-	if cliOpts != nil {
-		_ = readConfig(v, cliOpts.ConfigPath)
-	} else {
-		_ = readConfig(v, "")
-	}
+	_ = readConfig(v, cliOpts.ConfigPath)
 
 	config := &Application{
-		CliOptions: *cliOpts,
+		CliOptions: cliOpts,
 	}
-	err := v.Unmarshal(config)
-	if err != nil {
+
+	if err := v.Unmarshal(config); err != nil {
 		return nil, fmt.Errorf("unable to parse config: %w", err)
 	}
 	config.ConfigPath = v.ConfigFileUsed()
 
-	err = config.Build()
-	if err != nil {
+	if err := config.build(); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	return config, nil
 }
 
-func (cfg *Application) Build() error {
+// build inflates simple config values into syft native objects (or other complex objects) after the config is fully read in.
+func (cfg *Application) build() error {
 	// set the presenter
 	presenterOption := presenter.ParseOption(cfg.Output)
 	if presenterOption == presenter.UnknownPresenter {
@@ -119,6 +113,7 @@ func (cfg *Application) Build() error {
 	return nil
 }
 
+// readConfig attempts to read the given config path from disk or discover an alternate store location
 func readConfig(v *viper.Viper, configPath string) error {
 	v.AutomaticEnv()
 	v.SetEnvPrefix(internal.ApplicationName)
@@ -173,4 +168,12 @@ func readConfig(v *viper.Viper, configPath string) error {
 	}
 
 	return fmt.Errorf("application config not found")
+}
+
+// setNonCliDefaultValues ensures that there are sane defaults for values that do not have CLI equivalent options (where there would already be a default value)
+func setNonCliDefaultValues(v *viper.Viper) {
+	v.SetDefault("log.level", "")
+	v.SetDefault("log.file", "")
+	v.SetDefault("log.structured", false)
+	v.SetDefault("check-for-app-update", true)
 }

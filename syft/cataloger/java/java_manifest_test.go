@@ -50,7 +50,7 @@ func TestParseJavaManifest(t *testing.T) {
 						"Built-By": "?",
 					},
 					"1": {
-						"Build-Jdk":  "14.0.1",
+						"build-Jdk":  "14.0.1",
 						"Main-Class": "hello.HelloWorld",
 					},
 				},

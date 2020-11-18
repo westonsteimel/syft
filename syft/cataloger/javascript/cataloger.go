@@ -7,6 +7,8 @@ import (
 	"github.com/anchore/syft/syft/cataloger/common"
 )
 
+var cpeTargetSw = []string{"node.js", "nodejs"}
+
 // NewJavascriptPackageCataloger returns a new JavaScript cataloger object based on detection of npm based packages.
 func NewJavascriptPackageCataloger() *common.GenericCataloger {
 	globParsers := map[string]common.ParserFn{
