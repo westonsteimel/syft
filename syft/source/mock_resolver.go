@@ -1,7 +1,9 @@
 package source
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -35,19 +37,19 @@ func (r MockResolver) String() string {
 
 // FileContentsByLocation fetches file contents for a single location. If the
 // path does not exist, an error is returned.
-func (r MockResolver) FileContentsByLocation(location Location) (string, error) {
+func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
 	for _, l := range r.Locations {
 		if l == location {
-			return stringContent(location.Path)
+			return contentReader(location.Path)
 		}
 	}
 
-	return "", fmt.Errorf("no file for location: %v", location)
+	return nil, fmt.Errorf("no file for location: %v", location)
 }
 
 // MultipleFileContentsByLocation returns the file contents for all specified Locations.
-func (r MockResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]string, error) {
-	results := make(map[Location]string)
+func (r MockResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
+	results := make(map[Location]io.ReadCloser)
 	for _, l := range locations {
 		contents, err := r.FileContentsByLocation(l)
 		if err != nil {
@@ -101,16 +103,16 @@ func (r MockResolver) RelativeFileByPath(_ Location, path string) *Location {
 	return &paths[0]
 }
 
-func stringContent(path string) (string, error) {
+func contentReader(path string) (io.ReadCloser, error) {
 	reader, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	b, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(b), nil
+	return ioutil.NopCloser(bytes.NewReader(b)), nil
 }
