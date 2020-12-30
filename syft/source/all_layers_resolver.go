@@ -43,7 +43,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 	// since there is potentially considerable work for each symlink/hardlink that needs to be resolved, let's check to see if this is a symlink/hardlink first
 	entry, err := r.img.FileCatalog.Get(ref)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch metadata (ref=%+v): %w", ref, err)
+		return nil, fmt.Errorf("unable to fetch metadata (Reference=%+v): %w", ref, err)
 	}
 
 	if entry.Metadata.TypeFlag == tar.TypeLink || entry.Metadata.TypeFlag == tar.TypeSymlink {
@@ -52,7 +52,7 @@ func (r *AllLayersResolver) fileByRef(ref file.Reference, uniqueFileIDs file.Ref
 		for _, subLayerIdx := range r.layers[layerIdx:] {
 			resolvedRef, err := r.img.ResolveLinkByLayerSquash(ref, subLayerIdx)
 			if err != nil {
-				return nil, fmt.Errorf("failed to resolve link from layer (layer=%d ref=%+v): %w", subLayerIdx, ref, err)
+				return nil, fmt.Errorf("failed to resolve link from layer (layer=%d Reference=%+v): %w", subLayerIdx, ref, err)
 			}
 			if resolvedRef != nil && !uniqueFileIDs.Contains(*resolvedRef) {
 				uniqueFileIDs.Add(*resolvedRef)
@@ -153,7 +153,7 @@ func (r *AllLayersResolver) FilesByGlob(patterns ...string) ([]Location, error) 
 // RelativeFileByPath fetches a single file at the given path relative to the layer squash of the given reference.
 // This is helpful when attempting to find a file that is in the same layer or lower as another file.
 func (r *AllLayersResolver) RelativeFileByPath(location Location, path string) *Location {
-	entry, err := r.img.FileCatalog.Get(location.ref)
+	entry, err := r.img.FileCatalog.Get(location.Reference)
 	if err != nil {
 		return nil
 	}
@@ -181,7 +181,7 @@ func (r *AllLayersResolver) MultipleFileContentsByLocation(locations []Location)
 // FileContentsByLocation fetches file contents for a single file reference, irregardless of the source layer.
 // If the path does not exist an error is returned.
 func (r *AllLayersResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
-	return r.img.FileContentsByRef(location.ref)
+	return r.img.FileContentsByRef(location.Reference)
 }
 
 type multiContentFetcher func(refs ...file.Reference) (map[file.Reference]io.ReadCloser, error)
@@ -192,8 +192,8 @@ func mapLocationRefs(callback multiContentFetcher, locations []Location) (map[Lo
 	var results = make(map[Location]io.ReadCloser)
 
 	for i, location := range locations {
-		locationByRefs[location.ref] = location
-		fileRefs[i] = location.ref
+		locationByRefs[location.Reference] = location
+		fileRefs[i] = location.Reference
 	}
 
 	contentsByRef, err := callback(fileRefs...)

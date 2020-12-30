@@ -11,7 +11,7 @@ import (
 type Location struct {
 	Path         string         `json:"path"`              // The string path of the location (e.g. /etc/hosts)
 	FileSystemID string         `json:"layerID,omitempty"` // An ID representing the filesystem. For container images this is a layer digest, directories or root filesystem this is blank.
-	ref          file.Reference // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
+	Reference    file.Reference `json:"-"`                 // The file reference relative to the stereoscope.FileCatalog that has more information about this location.
 }
 
 // NewLocation creates a new Location representing a path without denoting a filesystem or FileCatalog reference.
@@ -21,20 +21,20 @@ func NewLocation(path string) Location {
 	}
 }
 
-// NewLocationFromImage creates a new Location representing the given path (extracted from the ref) relative to the given image.
+// NewLocationFromImage creates a new Location representing the given path (extracted from the Reference) relative to the given image.
 func NewLocationFromImage(ref file.Reference, img *image.Image) Location {
 	entry, err := img.FileCatalog.Get(ref)
 	if err != nil {
-		log.Warnf("unable to find file catalog entry for ref=%+v", ref)
+		log.Warnf("unable to find file catalog entry for Reference=%+v", ref)
 		return Location{
-			Path: string(ref.RealPath),
-			ref:  ref,
+			Path:      string(ref.RealPath),
+			Reference: ref,
 		}
 	}
 
 	return Location{
 		Path:         string(ref.RealPath),
 		FileSystemID: entry.Layer.Metadata.Digest,
-		ref:          ref,
+		Reference:    ref,
 	}
 }

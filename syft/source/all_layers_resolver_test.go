@@ -102,7 +102,7 @@ func TestAllLayersResolver_FilesByPath(t *testing.T) {
 					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
 				}
 
-				entry, err := img.FileCatalog.Get(actual.ref)
+				entry, err := img.FileCatalog.Get(actual.Reference)
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
@@ -206,7 +206,7 @@ func TestAllLayersResolver_FilesByGlob(t *testing.T) {
 					t.Errorf("bad resolve path: '%s'!='%s'", actual.Path, expected.path)
 				}
 
-				entry, err := img.FileCatalog.Get(actual.ref)
+				entry, err := img.FileCatalog.Get(actual.Reference)
 				if err != nil {
 					t.Fatalf("failed to get metadata: %+v", err)
 				}
