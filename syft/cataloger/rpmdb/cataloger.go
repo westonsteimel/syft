@@ -36,7 +36,7 @@ func (c *Cataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
 
 	var pkgs []pkg.Package
 	for _, location := range fileMatches {
-		dbContentReader, err := resolver.FileContentsByLocation(location)
+		dbContentReader, err := resolver.FileContentByLocation(location)
 		if err != nil {
 			return nil, err
 		}

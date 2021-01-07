@@ -53,7 +53,7 @@ identifyLoop:
 		}
 
 		for _, location := range locations {
-			contentReader, err := resolver.FileContentsByLocation(location)
+			contentReader, err := resolver.FileContentByLocation(location)
 
 			if err != nil {
 				log.Debugf("unable to get contents from %s: %s", entry.path, err)

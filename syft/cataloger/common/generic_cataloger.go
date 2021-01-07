@@ -4,7 +4,7 @@ Package common provides generic utilities used by multiple catalogers.
 package common
 
 import (
-	"io"
+	"fmt"
 
 	"github.com/anchore/syft/internal/log"
 	"github.com/anchore/syft/syft/pkg"
@@ -16,8 +16,6 @@ import (
 type GenericCataloger struct {
 	globParsers       map[string]ParserFn
 	pathParsers       map[string]ParserFn
-	selectedFiles     []source.Location
-	parsers           map[source.Location]ParserFn
 	upstreamCataloger string
 }
 
@@ -26,8 +24,6 @@ func NewGenericCataloger(pathParsers map[string]ParserFn, globParsers map[string
 	return &GenericCataloger{
 		globParsers:       globParsers,
 		pathParsers:       pathParsers,
-		selectedFiles:     make([]source.Location, 0),
-		parsers:           make(map[source.Location]ParserFn),
 		upstreamCataloger: upstreamCataloger,
 	}
 }
@@ -37,68 +33,16 @@ func (c *GenericCataloger) Name() string {
 	return c.upstreamCataloger
 }
 
-// register pairs a set of file references with a parser function for future cataloging (when the file contents are resolved)
-func (c *GenericCataloger) register(files []source.Location, parser ParserFn) {
-	c.selectedFiles = append(c.selectedFiles, files...)
-	for _, f := range files {
-		c.parsers[f] = parser
-	}
-}
-
-// clear deletes all registered file-reference-to-parser-function pairings from former SelectFiles() and register() calls
-func (c *GenericCataloger) clear() {
-	c.selectedFiles = make([]source.Location, 0)
-	c.parsers = make(map[source.Location]ParserFn)
-}
-
 // Catalog is given an object to resolve file references and content, this function returns any discovered Packages after analyzing the catalog source.
 func (c *GenericCataloger) Catalog(resolver source.Resolver) ([]pkg.Package, error) {
-	fileSelection := c.selectFiles(resolver)
-	contents, err := resolver.MultipleFileContentsByLocation(fileSelection)
-	if err != nil {
-		return nil, err
-	}
-	return c.catalog(contents)
-}
+	var packages []pkg.Package
+	parserByLocation := c.selectFiles(resolver)
 
-// SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
-func (c *GenericCataloger) selectFiles(resolver source.FileResolver) []source.Location {
-	// select by exact path
-	for path, parser := range c.pathParsers {
-		files, err := resolver.FilesByPath(path)
+	for location, parser := range parserByLocation {
+		content, err := resolver.FileContentByLocation(location)
 		if err != nil {
-			log.Warnf("cataloger failed to select files by path: %+v", err)
-		}
-		if files != nil {
-			c.register(files, parser)
-		}
-	}
-
-	// select by glob pattern
-	for globPattern, parser := range c.globParsers {
-		fileMatches, err := resolver.FilesByGlob(globPattern)
-		if err != nil {
-			log.Warnf("failed to find files by glob: %s", globPattern)
-		}
-		if fileMatches != nil {
-			c.register(fileMatches, parser)
-		}
-	}
-
-	return c.selectedFiles
-}
-
-// catalog takes a set of file contents and uses any configured parser functions to resolve and return discovered packages
-func (c *GenericCataloger) catalog(contents map[source.Location]io.ReadCloser) ([]pkg.Package, error) {
-	defer c.clear()
-
-	packages := make([]pkg.Package, 0)
-
-	for location, parser := range c.parsers {
-		content, ok := contents[location]
-		if !ok {
-			log.Warnf("cataloger '%s' missing file content: %+v", c.upstreamCataloger, location)
-			continue
+			// TODO: fail or log?
+			return nil, fmt.Errorf("unable to fetch contents for location=%v : %w", location, err)
 		}
 
 		entries, err := parser(location.RealPath, content)
@@ -115,6 +59,34 @@ func (c *GenericCataloger) catalog(contents map[source.Location]io.ReadCloser) (
 			packages = append(packages, entry)
 		}
 	}
-
 	return packages, nil
+}
+
+// SelectFiles takes a set of file trees and resolves and file references of interest for future cataloging
+func (c *GenericCataloger) selectFiles(resolver source.PathResolver) map[source.Location]ParserFn {
+	var parserByLocation = make(map[source.Location]ParserFn)
+
+	// select by exact path
+	for path, parser := range c.pathParsers {
+		files, err := resolver.FilesByPath(path)
+		if err != nil {
+			log.Warnf("cataloger failed to select files by path: %+v", err)
+		}
+		for _, f := range files {
+			parserByLocation[f] = parser
+		}
+	}
+
+	// select by glob pattern
+	for globPattern, parser := range c.globParsers {
+		fileMatches, err := resolver.FilesByGlob(globPattern)
+		if err != nil {
+			log.Warnf("failed to find files by glob: %s", globPattern)
+		}
+		for _, f := range fileMatches {
+			parserByLocation[f] = parser
+		}
+	}
+
+	return parserByLocation
 }

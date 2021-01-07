@@ -106,17 +106,8 @@ func (r *DirectoryResolver) RelativeFileByPath(_ Location, path string) *Locatio
 	return &paths[0]
 }
 
-// MultipleFileContentsByLocation returns the file contents for all file.References relative a directory.
-func (r DirectoryResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
-	refContents := make(map[Location]io.ReadCloser)
-	for _, location := range locations {
-		refContents[location] = file.NewDeferredReadCloser(location.RealPath)
-	}
-	return refContents, nil
-}
-
 // FileContentsByLocation fetches file contents for a single file reference relative to a directory.
 // If the path does not exist an error is returned.
-func (r DirectoryResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r DirectoryResolver) FileContentByLocation(location Location) (io.ReadCloser, error) {
 	return file.NewDeferredReadCloser(location.RealPath), nil
 }

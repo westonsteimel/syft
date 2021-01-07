@@ -1,7 +1,6 @@
 package source
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -95,58 +94,6 @@ func TestNewFromDirectory(t *testing.T) {
 			if len(refs) != test.expRefs {
 				t.Errorf("unexpected number of refs returned: %d != %d", len(refs), test.expRefs)
 
-			}
-
-		})
-	}
-}
-
-func TestMultipleFileContentsByLocation(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		input    string
-		path     string
-		expected string
-	}{
-		{
-			input:    "test-fixtures/path-detected",
-			desc:     "empty file",
-			path:     "test-fixtures/path-detected/empty",
-			expected: "",
-		},
-		{
-			input:    "test-fixtures/path-detected",
-			desc:     "file has contents",
-			path:     "test-fixtures/path-detected/.vimrc",
-			expected: "\" A .vimrc file\n",
-		},
-	}
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			p, err := NewFromDirectory(test.input)
-			if err != nil {
-				t.Errorf("could not create NewDirScope: %+v", err)
-			}
-			locations, err := p.Resolver.FilesByPath(test.path)
-			if err != nil {
-				t.Errorf("could not get file references from path: %s, %v", test.path, err)
-			}
-
-			if len(locations) != 1 {
-				t.Fatalf("expected a single location to be generated but got: %d", len(locations))
-			}
-			location := locations[0]
-
-			contents, err := p.Resolver.MultipleFileContentsByLocation([]Location{location})
-			contentReader := contents[location]
-
-			content, err := ioutil.ReadAll(contentReader)
-			if err != nil {
-				t.Fatalf("cannot read contents: %+v", err)
-			}
-
-			if string(content) != test.expected {
-				t.Errorf("unexpected contents from file: '%s' != '%s'", content, test.expected)
 			}
 
 		})

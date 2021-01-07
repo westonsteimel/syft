@@ -25,12 +25,8 @@ func (r testResolverMock) HasPath(path string) bool {
 	panic("not implemented")
 }
 
-func (r *testResolverMock) FileContentsByLocation(_ source.Location) (io.ReadCloser, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (r *testResolverMock) MultipleFileContentsByLocation([]source.Location) (map[source.Location]io.ReadCloser, error) {
-	return r.contents, nil
+func (r *testResolverMock) FileContentByLocation(l source.Location) (io.ReadCloser, error) {
+	return r.contents[l], nil
 }
 
 func (r *testResolverMock) FilesByPath(paths ...string) ([]source.Location, error) {

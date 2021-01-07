@@ -45,7 +45,7 @@ func (r MockResolver) String() string {
 
 // FileContentsByLocation fetches file contents for a single location. If the
 // path does not exist, an error is returned.
-func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, error) {
+func (r MockResolver) FileContentByLocation(location Location) (io.ReadCloser, error) {
 	for _, l := range r.Locations {
 		if l == location {
 			return os.Open(location.RealPath)
@@ -53,20 +53,6 @@ func (r MockResolver) FileContentsByLocation(location Location) (io.ReadCloser, 
 	}
 
 	return nil, fmt.Errorf("no file for location: %v", location)
-}
-
-// MultipleFileContentsByLocation returns the file contents for all specified Locations.
-func (r MockResolver) MultipleFileContentsByLocation(locations []Location) (map[Location]io.ReadCloser, error) {
-	results := make(map[Location]io.ReadCloser)
-	for _, l := range locations {
-		contents, err := r.FileContentsByLocation(l)
-		if err != nil {
-			return nil, err
-		}
-		results[l] = contents
-	}
-
-	return results, nil
 }
 
 // FilesByPath returns all Locations that match the given paths.
